@@ -13,6 +13,7 @@ import org.techmart.ejb.local.OrderServiceLocal;
 import org.techmart.ejb.local.ProductServiceLocal;
 import org.techmart.ejb.local.ShoppingCartLocal;
 import org.techmart.ejb.local.PaymentServiceLocal;
+import org.techmart.ejb.bean.PerformanceMetricsRegistry;
 import org.techmart.entity.CartItem;
 import org.techmart.entity.Product;
 import org.techmart.entity.Order;
@@ -44,6 +45,9 @@ public class CartServlet extends HttpServlet {
 
     @EJB
     private PaymentServiceLocal paymentService;
+
+    @EJB
+    private PerformanceMetricsRegistry metricsRegistry;
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -135,49 +139,82 @@ public class CartServlet extends HttpServlet {
                     String cardNumber = req.getParameter("cardNumber");
                     String expiry = req.getParameter("expiry");
                     String cvv = req.getParameter("cvv");
+                    String mode = req.getParameter("mode");
+                    boolean isSync = "sync".equalsIgnoreCase(mode);
 
-                    LOGGER.info("[CART] Initiating checkout for user: " + userId + ". Creating placeholder order.");
-                    
-                    // Create PENDING_PAYMENT placeholder order in database
-                    Order order = orderService.createOrderPlaceholder(userId, items);
+                    LOGGER.info("[CART] Initiating checkout for user: " + userId + ". Mode: " + (isSync ? "SYNC" : "ASYNC"));
 
-                    // Call the asynchronous payment bean
-                    Future<PaymentResult> paymentFuture = paymentService.processPayment(
-                            order.getId(), userId, cardNumber, expiry, cvv
-                    );
+                    long startTime = System.currentTimeMillis();
 
-                    try {
-                        // Wait up to 400ms for immediate payment verification
-                        PaymentResult result = paymentFuture.get(400, TimeUnit.MILLISECONDS);
-                        if (result.isSuccess()) {
-                            // Destroy stateful session bean cart on success
+                    if (isSync) {
+                        try {
+                            // 1. Process payment synchronously (simulating blocking 3rd party latency: 150-250ms)
+                            Thread.sleep(150 + (long) (Math.random() * 100));
+
+                            // 2. Synchronous Order Placement & Inventory Deduction
+                            Order order = orderService.placeOrderSync(userId, items);
+
+                            long duration = System.currentTimeMillis() - startTime;
+                            metricsRegistry.recordSyncCheckout(duration);
+
                             cart.destroyCart();
                             session.removeAttribute("session_cart");
-                            
-                            out.write("{\"status\":\"success\",\"message\":\"" + escapeJson(result.getMessage()) + 
-                                    "\",\"orderId\":" + order.getId() + 
-                                    ",\"transactionId\":\"" + result.getTransactionId() + 
-                                    "\",\"durationMs\":" + result.getDurationMs() + "}");
-                        } else {
-                            // Payment failed immediately
-                            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                            out.write("{\"status\":\"error\",\"message\":\"" + escapeJson(result.getMessage()) + 
-                                    "\",\"orderId\":" + order.getId() + "}");
-                        }
-                    } catch (TimeoutException e) {
-                        // 400ms timeout reached - processing continues in the background
-                        LOGGER.info("[CART] Payment processing timed out (exceeded 400ms) for Order ID: " + order.getId() + ". Processing in background.");
-                        
-                        // Clear session cart to prevent double-checkout
-                        cart.destroyCart();
-                        session.removeAttribute("session_cart");
 
-                        resp.setStatus(HttpServletResponse.SC_ACCEPTED); // 202 Accepted
-                        out.write("{\"status\":\"pending\",\"message\":\"Payment authorization is taking longer than expected. Processing in the background.\",\"orderId\":" + order.getId() + "}");
-                    } catch (Exception e) {
-                        LOGGER.log(Level.SEVERE, "Error resolving payment Future", e);
-                        resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                        out.write("{\"status\":\"error\",\"message\":\"Payment service resolution error: " + escapeJson(e.getMessage()) + "\"}");
+                            out.write("{\"status\":\"success\",\"message\":\"Payment authorized and order processed synchronously.\",\"orderId\":" + order.getId() + 
+                                    ",\"transactionId\":\"" + java.util.UUID.randomUUID().toString() + 
+                                    "\",\"durationMs\":" + duration + "}");
+                        } catch (Exception e) {
+                            LOGGER.log(Level.SEVERE, "Synchronous checkout failure", e);
+                            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                            out.write("{\"status\":\"error\",\"message\":\"Sync checkout failed: " + escapeJson(e.getMessage()) + "\"}");
+                        }
+                    } else {
+                        // Create PENDING_PAYMENT placeholder order in database
+                        Order order = orderService.createOrderPlaceholder(userId, items);
+
+                        // Call the asynchronous payment bean
+                        Future<PaymentResult> paymentFuture = paymentService.processPayment(
+                                order.getId(), userId, cardNumber, expiry, cvv
+                        );
+
+                        try {
+                            // Wait up to 400ms for immediate payment verification
+                            PaymentResult result = paymentFuture.get(400, TimeUnit.MILLISECONDS);
+                            long duration = System.currentTimeMillis() - startTime;
+                            metricsRegistry.recordAsyncCheckout(duration);
+
+                            if (result.isSuccess()) {
+                                // Destroy stateful session bean cart on success
+                                cart.destroyCart();
+                                session.removeAttribute("session_cart");
+                                
+                                out.write("{\"status\":\"success\",\"message\":\"" + escapeJson(result.getMessage()) + 
+                                        "\",\"orderId\":" + order.getId() + 
+                                        ",\"transactionId\":\"" + result.getTransactionId() + 
+                                        "\",\"durationMs\":" + duration + "}");
+                            } else {
+                                // Payment failed immediately
+                                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                                out.write("{\"status\":\"error\",\"message\":\"" + escapeJson(result.getMessage()) + 
+                                        "\",\"orderId\":" + order.getId() + "}");
+                            }
+                        } catch (TimeoutException e) {
+                            // 400ms timeout reached - processing continues in the background
+                            long duration = System.currentTimeMillis() - startTime;
+                            metricsRegistry.recordAsyncCheckout(duration);
+                            LOGGER.info("[CART] Payment processing timed out (exceeded 400ms) for Order ID: " + order.getId() + ". Processing in background.");
+                            
+                            // Clear session cart to prevent double-checkout
+                            cart.destroyCart();
+                            session.removeAttribute("session_cart");
+
+                            resp.setStatus(HttpServletResponse.SC_ACCEPTED); // 202 Accepted
+                            out.write("{\"status\":\"pending\",\"message\":\"Payment authorization is taking longer than expected. Processing in the background.\",\"orderId\":" + order.getId() + "}");
+                        } catch (Exception e) {
+                            LOGGER.log(Level.SEVERE, "Error resolving payment Future", e);
+                            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                            out.write("{\"status\":\"error\",\"message\":\"Payment service resolution error: " + escapeJson(e.getMessage()) + "\"}");
+                        }
                     }
                     break;
                 }

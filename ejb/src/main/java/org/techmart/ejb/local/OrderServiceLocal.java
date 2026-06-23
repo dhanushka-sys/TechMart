@@ -9,6 +9,7 @@ import java.util.List;
 @Local
 public interface OrderServiceLocal {
     Order placeOrder(Long userId, List<CartItem> cartItems) throws InventoryException;
+    Order placeOrderSync(Long userId, List<CartItem> cartItems) throws InventoryException;
     Order createOrderPlaceholder(Long userId, List<CartItem> cartItems) throws InventoryException;
     Order getOrderById(Long id);
     List<Order> getOrdersByUser(Long userId);

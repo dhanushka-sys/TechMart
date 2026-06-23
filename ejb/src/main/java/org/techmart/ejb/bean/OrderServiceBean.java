@@ -20,6 +20,8 @@ import org.techmart.entity.CartItem;
 import org.techmart.entity.User;
 import org.techmart.entity.Product;
 import org.techmart.entity.AuditLog;
+import org.techmart.entity.Inventory;
+import org.techmart.ejb.local.InventoryCacheLocal;
 import org.techmart.exception.InventoryException;
 import java.math.BigDecimal;
 import java.util.List;
@@ -38,6 +40,12 @@ public class OrderServiceBean implements OrderServiceLocal, OrderServiceRemote {
 
     @Resource(lookup = "jms/orderQueue")
     private Queue orderQueue;
+
+    @Inject
+    private InventoryCacheLocal inventoryCache;
+
+    @Inject
+    private PerformanceMetricsRegistry metricsRegistry;
 
     @PostConstruct
     public void init() {
@@ -114,6 +122,79 @@ public class OrderServiceBean implements OrderServiceLocal, OrderServiceRemote {
             throw new RuntimeException("Messaging provider error. Order rollback triggered.", e);
         }
 
+        return order;
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public Order placeOrderSync(Long userId, List<CartItem> cartItems) throws InventoryException {
+        LOGGER.info("Starting synchronous legacy order placement for user ID: " + userId);
+
+        if (cartItems == null || cartItems.isEmpty()) {
+            throw new IllegalArgumentException("Cart items cannot be empty.");
+        }
+
+        User user = em.find(User.class, userId);
+        if (user == null) {
+            throw new IllegalArgumentException("User with ID " + userId + " not found.");
+        }
+
+        // 1. Check inventory availability first
+        for (CartItem item : cartItems) {
+            Inventory inv = em.find(Inventory.class, item.getProductId());
+            if (inv == null || inv.getQuantity() < item.getQuantity()) {
+                metricsRegistry.incrementOrdersFailed();
+                LOGGER.warning("Synchronous checkout failed: Insufficient inventory for product " + item.getProductId());
+                throw new InventoryException("Insufficient inventory for Product ID: " + item.getProductId());
+            }
+        }
+
+        // 2. Create Order
+        Order order = new Order();
+        order.setUser(user);
+        order.setStatus("PROCESSED"); // Marked processed immediately since it is synchronous
+        order.setTotalAmount(BigDecimal.ZERO);
+        em.persist(order);
+
+        BigDecimal total = BigDecimal.ZERO;
+        for (CartItem item : cartItems) {
+            Product product = em.find(Product.class, item.getProductId());
+            if (product == null) {
+                throw new IllegalArgumentException("Product with ID " + item.getProductId() + " not found.");
+            }
+
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(order);
+            orderItem.setProduct(product);
+            orderItem.setQuantity(item.getQuantity());
+            orderItem.setPriceAtPurchase(product.getPrice());
+            em.persist(orderItem);
+
+            order.getItems().add(orderItem);
+            total = total.add(product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+
+            // 3. Deduct stock levels in database and cache synchronously
+            Inventory inv = em.find(Inventory.class, item.getProductId());
+            int updatedQty = inv.getQuantity() - item.getQuantity();
+            inv.setQuantity(updatedQty);
+            em.merge(inv);
+            inventoryCache.updateStock(item.getProductId(), updatedQty);
+        }
+
+        order.setTotalAmount(total);
+        order = em.merge(order);
+
+        // 4. Write Audit Log
+        AuditLog audit = new AuditLog();
+        audit.setAction("ORDER_CREATED_SYNC");
+        audit.setTargetType("Order");
+        audit.setTargetId(order.getId());
+        audit.setChangedBy(user.getEmail());
+        em.persist(audit);
+        em.flush();
+
+        metricsRegistry.incrementOrdersProcessed();
+        LOGGER.info("Synchronous order placement completed for Order ID: " + order.getId());
         return order;
     }
 

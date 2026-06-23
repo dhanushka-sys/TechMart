@@ -486,6 +486,13 @@
                                        class="w-full text-xs px-3.5 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 outline-none focus:bg-white focus:border-violet-500/50">
                             </div>
                         </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5 font-outfit">Checkout Mode</label>
+                            <select id="checkout-mode" class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 outline-none focus:border-violet-500/50">
+                                <option value="async">Asynchronous (Modernized JMS)</option>
+                                <option value="sync">Synchronous (Legacy Monolithic)</option>
+                            </select>
+                        </div>
                         <button id="checkout-btn" onclick="submitPayment()" disabled 
                                 class="w-full text-xs font-bold py-3.5 rounded-xl text-white glow-btn mt-2 opacity-50">
                             Confirm Payment & Checkout
@@ -1410,16 +1417,23 @@
         const card = document.getElementById('payment-card-number').value;
         const expiry = document.getElementById('payment-card-expiry').value;
         const cvv = document.getElementById('payment-card-cvv').value;
+        const mode = document.getElementById('checkout-mode').value;
 
         const overlay = document.getElementById('loading-overlay');
         const overlayMsg = document.getElementById('loading-message');
         const overlaySub = document.getElementById('loading-sub');
         overlay.classList.remove('hidden');
-        overlayMsg.textContent = "Authorizing Card with EJB Thread Pool...";
-        overlaySub.textContent = "Awaiting future resolution (400ms timeout threshold)";
+        
+        if (mode === 'sync') {
+            overlayMsg.textContent = "Authorizing Card & Processing Order Synchronously...";
+            overlaySub.textContent = "Legacy blocking execution thread (Simulated Gateway)";
+        } else {
+            overlayMsg.textContent = "Authorizing Card with EJB Thread Pool...";
+            overlaySub.textContent = "Awaiting future resolution (400ms timeout threshold)";
+        }
 
         try {
-            const checkoutUrl = `<%= request.getContextPath() %>/cart?action=checkout&userId=${userId}&cardNumber=${encodeURIComponent(card)}&expiry=${encodeURIComponent(expiry)}&cvv=${encodeURIComponent(cvv)}`;
+            const checkoutUrl = `<%= request.getContextPath() %>/cart?action=checkout&userId=${userId}&cardNumber=${encodeURIComponent(card)}&expiry=${encodeURIComponent(expiry)}&cvv=${encodeURIComponent(cvv)}&mode=${mode}`;
             
             const res = await fetch(checkoutUrl);
             const data = await res.json();
