@@ -133,7 +133,7 @@
 <div class="absolute bottom-[10%] right-[10%] w-[30%] h-[30%] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none"></div>
 
 <!-- Sidebar Navigation -->
-<aside class="flex flex-col py-6 px-5 select-none shrink-0 w-[260px] border-r border-slate-200 bg-white relative z-20 min-h-screen">
+<aside class="flex flex-col py-6 px-5 select-none shrink-0 w-[260px] border-r border-slate-200 bg-white relative z-20 h-screen sticky top-0 overflow-y-hidden">
     <div class="flex items-center gap-3 px-3 mb-8">
         <div class="w-8 h-8 rounded-xl flex items-center justify-center text-base font-bold shadow-md" style="background: linear-gradient(135deg, #a855f7, #6366f1); color: #fff;">⚡</div>
         <span class="text-lg font-extrabold tracking-tight font-outfit bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-indigo-500">TechMart</span>
@@ -167,18 +167,6 @@
         </div>
     </nav>
 
-    <!-- Bottom metadata panel -->
-    <div class="mt-auto p-3.5 rounded-xl border border-slate-200 bg-slate-50">
-        <div class="flex items-center gap-2 mb-1.5">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block pulse-light animate-pulse"></span>
-            <span class="text-xs font-bold text-slate-700 font-outfit">Payara Server 6</span>
-        </div>
-        <div class="text-[10px] text-slate-500 space-y-0.5">
-            <p>Jakarta EE 10 • EJB 4.0</p>
-            <p>JMS Message Queues Active</p>
-            <p class="text-indigo-650 font-medium">MySQL Connection pool</p>
-        </div>
-    </div>
 </aside>
 
 <!-- Main Workspace Content -->
@@ -414,6 +402,15 @@
                     </tbody>
                 </table>
             </div>
+            <!-- Inventory Pagination Controls -->
+            <div class="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50/50 hidden" id="inventory-pagination">
+                <span class="text-xs text-slate-500" id="inventory-pagination-info">Showing 0-0 of 0 products</span>
+                <div class="flex items-center gap-1.5">
+                    <button onclick="changeInventoryPage(-1)" id="btn-inventory-prev" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-[10px] font-bold text-slate-600 transition-all disabled:opacity-50 disabled:pointer-events-none">Prev</button>
+                    <div class="flex items-center gap-1" id="inventory-pagination-pages"></div>
+                    <button onclick="changeInventoryPage(1)" id="btn-inventory-next" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-[10px] font-bold text-slate-600 transition-all disabled:opacity-50 disabled:pointer-events-none">Next</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -536,6 +533,15 @@
                             </tbody>
                         </table>
                     </div>
+                    <!-- Orders Pagination Controls -->
+                    <div class="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50/50 hidden" id="orders-pagination">
+                        <span class="text-xs text-slate-500" id="orders-pagination-info">Showing 0-0 of 0 orders</span>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="changeOrdersPage(-1)" id="btn-orders-prev" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-[10px] font-bold text-slate-600 transition-all disabled:opacity-50 disabled:pointer-events-none">Prev</button>
+                            <div class="flex items-center gap-1" id="orders-pagination-pages"></div>
+                            <button onclick="changeOrdersPage(1)" id="btn-orders-next" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-[10px] font-bold text-slate-600 transition-all disabled:opacity-50 disabled:pointer-events-none">Next</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -616,23 +622,34 @@
                 <h3 class="text-base font-bold text-slate-900 font-outfit">Security & Audit Event Trails</h3>
                 <span class="text-xs text-indigo-650 font-semibold">Auto-refreshing audit log registry</span>
             </div>
-            <div class="glass-panel rounded-2xl overflow-hidden border border-slate-200 max-h-[300px] overflow-y-auto">
-                <table class="w-full text-xs text-left">
-                    <thead>
-                        <tr class="border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[10px] font-bold bg-slate-100/50 sticky top-0">
-                            <th class="px-6 py-3.5">Log ID</th>
-                            <th class="px-6 py-3.5">Action Triggered</th>
-                            <th class="px-6 py-3.5">Target entity</th>
-                            <th class="px-6 py-3.5">Executor Identity</th>
-                            <th class="px-6 py-3.5 text-right">Timestamp</th>
-                        </tr>
-                    </thead>
-                    <tbody id="audit-table-body" class="divide-y divide-slate-200">
-                        <tr>
-                            <td colspan="5" class="px-6 py-8 text-center text-slate-500">Loading audit history logs...</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="glass-panel rounded-2xl overflow-hidden border border-slate-200">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-left">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[10px] font-bold bg-slate-100/50 sticky top-0">
+                                <th class="px-6 py-3.5">Log ID</th>
+                                <th class="px-6 py-3.5">Action Triggered</th>
+                                <th class="px-6 py-3.5">Target entity</th>
+                                <th class="px-6 py-3.5">Executor Identity</th>
+                                <th class="px-6 py-3.5 text-right">Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-table-body" class="divide-y divide-slate-200">
+                            <tr>
+                                <td colspan="5" class="px-6 py-8 text-center text-slate-500">Loading audit history logs...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Audit Pagination Controls -->
+                <div class="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50/50 hidden" id="audit-pagination">
+                    <span class="text-xs text-slate-500" id="audit-pagination-info">Showing 0-0 of 0 logs</span>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="changeAuditPage(-1)" id="btn-audit-prev" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-[10px] font-bold text-slate-600 transition-all disabled:opacity-50 disabled:pointer-events-none">Prev</button>
+                        <div class="flex items-center gap-1" id="audit-pagination-pages"></div>
+                        <button onclick="changeAuditPage(1)" id="btn-audit-next" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-[10px] font-bold text-slate-600 transition-all disabled:opacity-50 disabled:pointer-events-none">Next</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -685,6 +702,18 @@
     let latestOverviewData = null;
     
     let productsList = [];
+    let ordersList = [];
+    let auditsList = [];
+
+    let ordersCurrentPage = 1;
+    const ordersPageSize = 10;
+    
+    let inventoryCurrentPage = 1;
+    const inventoryPageSize = 10;
+    
+    let auditCurrentPage = 1;
+    const auditPageSize = 10;
+
     let adminMode = false;
     
     let notifiedOrders = new Set();
@@ -798,57 +827,65 @@
             bgGradStop = 'rgba(234, 179, 8, 0.15)';
         }
 
-        if (mainChart) mainChart.destroy();
-        
         const grad = ctx.createLinearGradient(0, 0, 0, 240);
         grad.addColorStop(0, bgGradStop);
         grad.addColorStop(1, 'rgba(248, 250, 252, 0)');
- 
-        mainChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels.length ? labels : ['No orders'],
-                datasets: [{
-                    label: labelStr,
-                    data: values.length ? values : [0],
-                    borderColor: borderCol,
-                    backgroundColor: grad,
-                    borderWidth: 2,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: '#ffffff',
-                    pointBorderColor: borderCol,
-                    pointBorderWidth: 2,
-                    fill: true,
-                    tension: 0.35,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: '#ffffff',
-                        titleColor: '#7c3aed',
-                        bodyColor: '#1e293b',
-                        padding: 12,
-                        cornerRadius: 12,
-                        borderColor: 'rgba(226, 232, 240, 0.9)',
-                        borderWidth: 1,
-                        callbacks: {
-                            label: ctx => currentOverviewTab === 'revenue' 
-                                ? 'Rs. ' + ctx.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2})
-                                : ctx.parsed.y
-                        }
-                    }
+
+        if (mainChart) {
+            mainChart.data.labels = labels.length ? labels : ['No orders'];
+            mainChart.data.datasets[0].label = labelStr;
+            mainChart.data.datasets[0].data = values.length ? values : [0];
+            mainChart.data.datasets[0].borderColor = borderCol;
+            mainChart.data.datasets[0].backgroundColor = grad;
+            mainChart.data.datasets[0].pointBorderColor = borderCol;
+            mainChart.update('none');
+        } else {
+            mainChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels.length ? labels : ['No orders'],
+                    datasets: [{
+                        label: labelStr,
+                        data: values.length ? values : [0],
+                        borderColor: borderCol,
+                        backgroundColor: grad,
+                        borderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: borderCol,
+                        pointBorderWidth: 2,
+                        fill: true,
+                        tension: 0.35,
+                    }]
                 },
-                scales: {
-                    x: { grid: { color: 'rgba(0, 0, 0, 0.04)' }, ticks: { color: '#475569', font: { size: 10 } } },
-                    y: { grid: { color: 'rgba(0, 0, 0, 0.04)' }, ticks: { color: '#475569', font: { size: 10 } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#ffffff',
+                            titleColor: '#7c3aed',
+                            bodyColor: '#1e293b',
+                            padding: 12,
+                            cornerRadius: 12,
+                            borderColor: 'rgba(226, 232, 240, 0.9)',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: ctx => currentOverviewTab === 'revenue' 
+                                    ? 'Rs. ' + ctx.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2})
+                                    : ctx.parsed.y
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { color: 'rgba(0, 0, 0, 0.04)' }, ticks: { color: '#475569', font: { size: 10 } } },
+                        y: { grid: { color: 'rgba(0, 0, 0, 0.04)' }, ticks: { color: '#475569', font: { size: 10 } } }
+                    }
                 }
-            }
-        });
+            });
+        }
     }
  
     function buildDonutChart(data) {
@@ -863,30 +900,34 @@
             if (o.status === 'FAILED_PAYMENT') failed++;
         });
  
-        if (donutChart) donutChart.destroy();
-        donutChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Processed/Success', 'Pending Payment', 'Failed/Declined'],
-                datasets: [{
-                    data: [processed, pending, failed],
-                    backgroundColor: ['#10b981', '#6366f1', '#ef4444'],
-                    borderWidth: 0,
-                    hoverOffset: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '75%',
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: { color: '#475569', boxWidth: 10, font: { size: 10, family: 'Inter' } }
+        if (donutChart) {
+            donutChart.data.datasets[0].data = [processed, pending, failed];
+            donutChart.update('none');
+        } else {
+            donutChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Processed/Success', 'Pending Payment', 'Failed/Declined'],
+                    datasets: [{
+                        data: [processed, pending, failed],
+                        backgroundColor: ['#10b981', '#6366f1', '#ef4444'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { color: '#475569', boxWidth: 10, font: { size: 10, family: 'Inter' } }
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
     }
  
     function switchChart(tab) {
@@ -929,7 +970,6 @@
             buildDonutChart(data);
 
             const checkoutsCol = document.getElementById('col-checkouts');
-            checkoutsCol.innerHTML = '';
             const filteredOrders = (data.recentOrders || []).filter(o => 
                 o.userEmail.toLowerCase().includes(query) || o.status.toLowerCase().includes(query) || ('#' + o.id).includes(query)
             );
@@ -938,12 +978,13 @@
             if (filteredOrders.length === 0) {
                 checkoutsCol.innerHTML = `<div class="text-xs text-slate-500 text-center py-6">No recent transactions matches</div>`;
             } else {
+                let html = '';
                 filteredOrders.forEach(o => {
                     let badgeColor = 'bg-slate-100 text-slate-650 border-slate-200';
                     if (o.status === 'PROCESSED' || o.status === 'PAYMENT_SUCCESS') badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-250';
                     else if (o.status.includes('FAILED')) badgeColor = 'bg-rose-50 text-rose-700 border-rose-250';
 
-                    checkoutsCol.innerHTML += `
+                    html += `
                         <div class="flex justify-between items-center p-3 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-slate-100/60 transition-all duration-150">
                             <div>
                                 <div class="text-xs font-bold text-slate-800">Order #${o.id}</div>
@@ -956,10 +997,10 @@
                         </div>
                     `;
                 });
+                checkoutsCol.innerHTML = html;
             }
 
             const catalogCol = document.getElementById('col-catalog');
-            catalogCol.innerHTML = '';
             const filteredCatalog = (data.catalog || []).filter(p => 
                 p.title.toLowerCase().includes(query) || p.sku.toLowerCase().includes(query)
             );
@@ -968,13 +1009,14 @@
             if (filteredCatalog.length === 0) {
                 catalogCol.innerHTML = `<div class="text-xs text-slate-500 text-center py-6">No catalog products match</div>`;
             } else {
+                let html = '';
                 filteredCatalog.forEach(p => {
                     const stock = data.stocks && data.stocks[p.id] !== undefined ? data.stocks[p.id] : 0;
                     let stockBadge = 'text-emerald-700 bg-emerald-50 border border-emerald-250';
                     if (stock <= 0) stockBadge = 'text-rose-700 bg-rose-50 border border-rose-250';
                     else if (stock < 20) stockBadge = 'text-amber-700 bg-amber-50 border border-amber-250';
 
-                    catalogCol.innerHTML += `
+                    html += `
                         <div class="flex justify-between items-center p-3 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-slate-100/60 transition-all duration-150 text-xs">
                             <div>
                                 <div class="font-bold text-slate-800">${p.title}</div>
@@ -987,6 +1029,7 @@
                         </div>
                     `;
                 });
+                catalogCol.innerHTML = html;
             }
         } catch (e) {
             console.error('Error fetching metrics', e);
@@ -1011,56 +1054,66 @@
         const barLabels = products.map(p => p.sku);
         const barData = products.map(p => p.stock);
 
-        if (stockChart) stockChart.destroy();
-        stockChart = new Chart(barCtx, {
-            type: 'bar',
-            data: {
-                labels: barLabels.length ? barLabels : ['None'],
-                datasets: [{
-                    data: barData.length ? barData : [0],
-                    backgroundColor: barData.map(v => v < 20 ? 'rgba(239, 68, 68, 0.75)' : 'rgba(16, 185, 129, 0.75)'),
-                    borderRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { ticks: { color: '#475569', font: { size: 9 } }, grid: { display: false } },
-                    y: { ticks: { color: '#475569', font: { size: 9 } }, grid: { color: 'rgba(0,0,0,0.04)' } }
+        if (stockChart) {
+            stockChart.data.labels = barLabels.length ? barLabels : ['None'];
+            stockChart.data.datasets[0].data = barData.length ? barData : [0];
+            stockChart.data.datasets[0].backgroundColor = barData.map(v => v < 20 ? 'rgba(239, 68, 68, 0.75)' : 'rgba(16, 185, 129, 0.75)');
+            stockChart.update('none');
+        } else {
+            stockChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: barLabels.length ? barLabels : ['None'],
+                    datasets: [{
+                        data: barData.length ? barData : [0],
+                        backgroundColor: barData.map(v => v < 20 ? 'rgba(239, 68, 68, 0.75)' : 'rgba(16, 185, 129, 0.75)'),
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#475569', font: { size: 9 } }, grid: { display: false } },
+                        y: { ticks: { color: '#475569', font: { size: 9 } }, grid: { color: 'rgba(0,0,0,0.04)' } }
+                    }
                 }
-            }
-        });
+            });
+        }
 
         const donutCtx = document.getElementById('stock-donut').getContext('2d');
         const inStock = products.filter(p => p.stock >= 20).length;
         const lowStock = products.filter(p => p.stock > 0 && p.stock < 20).length;
         const outOfStock = products.filter(p => p.stock <= 0).length;
 
-        if (stockDonut) stockDonut.destroy();
-        stockDonut = new Chart(donutCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['In Stock', 'Low Stock', 'Out of Stock'],
-                datasets: [{
-                    data: [inStock, lowStock, outOfStock],
-                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '70%',
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { color: '#475569', font: { size: 9 }, boxWidth: 8 }
+        if (stockDonut) {
+            stockDonut.data.datasets[0].data = [inStock, lowStock, outOfStock];
+            stockDonut.update('none');
+        } else {
+            stockDonut = new Chart(donutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['In Stock', 'Low Stock', 'Out of Stock'],
+                    datasets: [{
+                        data: [inStock, lowStock, outOfStock],
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#475569', font: { size: 9 }, boxWidth: 8 }
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
     async function loadCatalog() {
@@ -1075,7 +1128,7 @@
             document.getElementById('inventory-sync-latency').textContent = data.syncLatency.toFixed(1) + ' ms';
 
             buildInventoryCharts(productsList);
-            renderInventoryTable(productsList);
+            renderInventoryTable();
         } catch (e) {
             console.error(e);
         }
@@ -1087,7 +1140,7 @@
         if (header) {
             header.textContent = adminMode ? 'Restock Command' : 'Purchase Command';
         }
-        renderInventoryTable(productsList);
+        renderInventoryTable();
     }
 
     async function addToCart(id) {
@@ -1110,19 +1163,43 @@
         }
     }
 
-    function renderInventoryTable(products) {
-        const tbody = document.getElementById('inventory-table-body');
-        tbody.innerHTML = '';
+    function getFilteredProducts() {
+        const queryInput = document.getElementById('inventory-search-input');
+        const query = queryInput ? queryInput.value.toLowerCase() : '';
+        return productsList.filter(p => 
+            p.title.toLowerCase().includes(query) || 
+            p.sku.toLowerCase().includes(query)
+        );
+    }
 
-        if (products.length === 0) {
+    function renderInventoryTable() {
+        const tbody = document.getElementById('inventory-table-body');
+        const filtered = getFilteredProducts();
+        
+        if (filtered.length === 0) {
             tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-slate-500">No matching products found.</td></tr>`;
+            const pag = document.getElementById('inventory-pagination');
+            if (pag) pag.classList.add('hidden');
             return;
         }
-
-        products.forEach(p => {
-            let statusBadge = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-            if (p.stock <= 0) statusBadge = 'bg-rose-50 text-rose-700 border-rose-200';
-            else if (p.stock < 20) statusBadge = 'bg-amber-50 text-amber-700 border-amber-200';
+        
+        const pag = document.getElementById('inventory-pagination');
+        if (pag) pag.classList.remove('hidden');
+        
+        const totalItems = filtered.length;
+        const totalPages = Math.ceil(totalItems / inventoryPageSize);
+        if (inventoryCurrentPage > totalPages) inventoryCurrentPage = Math.max(1, totalPages);
+        
+        const startIndex = (inventoryCurrentPage - 1) * inventoryPageSize;
+        const endIndex = Math.min(startIndex + inventoryPageSize, totalItems);
+        
+        const pageItems = filtered.slice(startIndex, endIndex);
+        
+        let html = '';
+        pageItems.forEach(p => {
+            let statusBadge = 'bg-emerald-50 text-emerald-700 border-emerald-250';
+            if (p.stock <= 0) statusBadge = 'bg-rose-50 text-rose-700 border-rose-250';
+            else if (p.stock < 20) statusBadge = 'bg-amber-50 text-amber-700 border-amber-250';
 
             let actionHtml = '';
             if (adminMode) {
@@ -1145,7 +1222,7 @@
                 `;
             }
 
-            tbody.innerHTML += `
+            html += `
                 <tr class="hover:bg-slate-50 transition-all">
                     <td class="px-6 py-3.5 font-bold text-indigo-650 font-mono">${p.sku}</td>
                     <td class="px-6 py-3.5 font-semibold text-slate-800">${p.title}</td>
@@ -1160,15 +1237,52 @@
                 </tr>
             `;
         });
+        
+        tbody.innerHTML = html;
+        
+        // Update pagination UI
+        const infoEl = document.getElementById('inventory-pagination-info');
+        if (infoEl) infoEl.textContent = `Showing ${totalItems === 0 ? 0 : startIndex + 1}-${endIndex} of ${totalItems} products`;
+        
+        const btnPrev = document.getElementById('btn-inventory-prev');
+        if (btnPrev) btnPrev.disabled = (inventoryCurrentPage === 1);
+        
+        const btnNext = document.getElementById('btn-inventory-next');
+        if (btnNext) btnNext.disabled = (inventoryCurrentPage === totalPages || totalPages === 0);
+        
+        const pagesContainer = document.getElementById('inventory-pagination-pages');
+        if (pagesContainer) {
+            pagesContainer.innerHTML = '';
+            let startPage = Math.max(1, inventoryCurrentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const activeClass = i === inventoryCurrentPage 
+                    ? 'bg-violet-600 text-white border-violet-600' 
+                    : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200';
+                pagesContainer.innerHTML += `
+                    <button onclick="goInventoryPage(${i})" class="w-7 h-7 flex items-center justify-center rounded-lg border text-[10px] font-bold transition-all ${activeClass}">${i}</button>
+                `;
+            }
+        }
+    }
+
+    function goInventoryPage(page) {
+        inventoryCurrentPage = page;
+        renderInventoryTable();
+    }
+    
+    function changeInventoryPage(dir) {
+        inventoryCurrentPage += dir;
+        renderInventoryTable();
     }
 
     function filterProducts() {
-        const query = document.getElementById('inventory-search-input').value.toLowerCase();
-        const filtered = productsList.filter(p => 
-            p.title.toLowerCase().includes(query) || 
-            p.sku.toLowerCase().includes(query)
-        );
-        renderInventoryTable(filtered);
+        inventoryCurrentPage = 1;
+        renderInventoryTable();
     }
 
     function openRestockModal(id, sku, title) {
@@ -1223,7 +1337,6 @@
             const data = await res.json();
             
             const list = document.getElementById('cart-items-list');
-            list.innerHTML = '';
             
             const items = data.items || [];
             let totalQty = 0;
@@ -1241,11 +1354,12 @@
             document.getElementById('checkout-btn').disabled = false;
             document.getElementById('checkout-btn').classList.remove('opacity-50');
 
+            let html = '';
             items.forEach(item => {
                 totalQty += item.quantity;
                 totalPrice += (item.price * item.quantity);
 
-                list.innerHTML += `
+                html += `
                     <div class="flex justify-between items-center p-3 rounded-xl border border-slate-200 bg-white shadow-sm">
                         <div class="max-w-[70%]">
                             <div class="font-bold text-slate-800 truncate">${item.title}</div>
@@ -1258,6 +1372,7 @@
                     </div>
                 `;
             });
+            list.innerHTML = html;
 
             document.getElementById('cart-item-count').textContent = `${totalQty} items`;
             document.getElementById('cart-total-price').textContent = 'Rs. ' + totalPrice.toLocaleString('en-US', {
@@ -1343,37 +1458,12 @@
         try {
             const res = await fetch('<%= request.getContextPath() %>/orders?format=json');
             const data = await res.json();
-            const tbody = document.getElementById('orders-list-table-body');
-            tbody.innerHTML = '';
-
-            const orders = data.orders || [];
-            document.getElementById('orders-list-count-badge').textContent = `${orders.length} orders total`;
-
-            if (orders.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-slate-500">No transactions recorded yet</td></tr>`;
-                return;
-            }
+            ordersList = data.orders || [];
 
             const feed = document.getElementById('notifications-list-feed');
             let newNotifications = '';
 
-            orders.forEach(o => {
-                let statusBadge = 'bg-indigo-50 text-indigo-700 border-indigo-200';
-                if (o.status === 'PROCESSED' || o.status === 'PAYMENT_SUCCESS') statusBadge = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                else if (o.status.includes('FAILED')) statusBadge = 'bg-rose-50 text-rose-700 border-rose-200';
-
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition-all">
-                        <td class="px-6 py-4 font-bold text-slate-800">#${o.id}</td>
-                        <td class="px-6 py-4 text-slate-500">${o.userEmail}</td>
-                        <td class="px-6 py-4 font-bold text-slate-900">Rs. ${o.totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-                        <td class="px-6 py-4">
-                            <span class="text-[9px] font-bold px-2 py-0.5 rounded-full border ${statusBadge} font-mono">${o.status}</span>
-                        </td>
-                        <td class="px-6 py-4 text-[10px] text-slate-500 font-mono">${o.orderedAt ? o.orderedAt.substring(0, 19).replace('T', ' ') : ''}</td>
-                    </tr>
-                `;
-
+            ordersList.forEach(o => {
                 if (!notifiedOrders.has(o.id)) {
                     notifiedOrders.add(o.id);
                     if (o.status === 'PROCESSED' || o.status === 'PAYMENT_SUCCESS') {
@@ -1410,9 +1500,94 @@
                 feed.innerHTML = newNotifications + feed.innerHTML;
                 document.getElementById('notification-count').textContent = `${notificationsCount} notifications active`;
             }
+
+            renderOrdersTable();
         } catch (e) {
             console.error('Failed to load orders', e);
         }
+    }
+
+    function renderOrdersTable() {
+        const tbody = document.getElementById('orders-list-table-body');
+        document.getElementById('orders-list-count-badge').textContent = `${ordersList.length} orders total`;
+
+        if (ordersList.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-slate-500">No transactions recorded yet</td></tr>`;
+            const pag = document.getElementById('orders-pagination');
+            if (pag) pag.classList.add('hidden');
+            return;
+        }
+
+        const pag = document.getElementById('orders-pagination');
+        if (pag) pag.classList.remove('hidden');
+
+        const totalItems = ordersList.length;
+        const totalPages = Math.ceil(totalItems / ordersPageSize);
+        if (ordersCurrentPage > totalPages) ordersCurrentPage = Math.max(1, totalPages);
+
+        const startIndex = (ordersCurrentPage - 1) * ordersPageSize;
+        const endIndex = Math.min(startIndex + ordersPageSize, totalItems);
+
+        const pageItems = ordersList.slice(startIndex, endIndex);
+
+        let html = '';
+        pageItems.forEach(o => {
+            let statusBadge = 'bg-indigo-50 text-indigo-700 border-indigo-200';
+            if (o.status === 'PROCESSED' || o.status === 'PAYMENT_SUCCESS') statusBadge = 'bg-emerald-50 text-emerald-700 border-emerald-250';
+            else if (o.status.includes('FAILED')) statusBadge = 'bg-rose-50 text-rose-700 border-rose-250';
+
+            html += `
+                <tr class="hover:bg-slate-50 transition-all">
+                    <td class="px-6 py-4 font-bold text-slate-800">#${o.id}</td>
+                    <td class="px-6 py-4 text-slate-500">${o.userEmail}</td>
+                    <td class="px-6 py-4 font-bold text-slate-900">Rs. ${o.totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                    <td class="px-6 py-4">
+                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full border ${statusBadge} font-mono">${o.status}</span>
+                    </td>
+                    <td class="px-6 py-4 text-[10px] text-slate-500 font-mono">${o.orderedAt ? o.orderedAt.substring(0, 19).replace('T', ' ') : ''}</td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+
+        // Update pagination UI
+        const infoEl = document.getElementById('orders-pagination-info');
+        if (infoEl) infoEl.textContent = `Showing ${totalItems === 0 ? 0 : startIndex + 1}-${endIndex} of ${totalItems} orders`;
+
+        const btnPrev = document.getElementById('btn-orders-prev');
+        if (btnPrev) btnPrev.disabled = (ordersCurrentPage === 1);
+
+        const btnNext = document.getElementById('btn-orders-next');
+        if (btnNext) btnNext.disabled = (ordersCurrentPage === totalPages || totalPages === 0);
+
+        const pagesContainer = document.getElementById('orders-pagination-pages');
+        if (pagesContainer) {
+            pagesContainer.innerHTML = '';
+            let startPage = Math.max(1, ordersCurrentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const activeClass = i === ordersCurrentPage
+                    ? 'bg-violet-600 text-white border-violet-600'
+                    : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200';
+                pagesContainer.innerHTML += `
+                    <button onclick="goOrdersPage(${i})" class="w-7 h-7 flex items-center justify-center rounded-lg border text-[10px] font-bold transition-all ${activeClass}">${i}</button>
+                `;
+            }
+        }
+    }
+
+    function goOrdersPage(page) {
+        ordersCurrentPage = page;
+        renderOrdersTable();
+    }
+
+    function changeOrdersPage(dir) {
+        ordersCurrentPage += dir;
+        renderOrdersTable();
     }
 
     // ==========================================
@@ -1420,48 +1595,53 @@
     // ==========================================
     function buildLatencyChart() {
         const ctx = document.getElementById('latency-chart').getContext('2d');
-        if (latencyChart) latencyChart.destroy();
-
-        latencyChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: latencyHistory.labels.length ? latencyHistory.labels : ['Waiting...'],
-                datasets: [
-                    {
-                        label: 'Sync Checkout Latency (ms)',
-                        data: latencyHistory.sync.length ? latencyHistory.sync : [0],
-                        borderColor: '#a855f7',
-                        borderWidth: 2,
-                        pointRadius: 3,
-                        tension: 0.35,
-                        fill: false
-                    },
-                    {
-                        label: 'Async Processing Time (ms)',
-                        data: latencyHistory.async.length ? latencyHistory.async : [0],
-                        borderColor: '#3b82f6',
-                        borderWidth: 2,
-                        pointRadius: 3,
-                        tension: 0.35,
-                        fill: false
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: { color: '#475569', font: { size: 10 } }
-                    }
+        if (latencyChart) {
+            latencyChart.data.labels = latencyHistory.labels.length ? latencyHistory.labels : ['Waiting...'];
+            latencyChart.data.datasets[0].data = latencyHistory.sync.length ? latencyHistory.sync : [0];
+            latencyChart.data.datasets[1].data = latencyHistory.async.length ? latencyHistory.async : [0];
+            latencyChart.update('none');
+        } else {
+            latencyChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: latencyHistory.labels.length ? latencyHistory.labels : ['Waiting...'],
+                    datasets: [
+                        {
+                            label: 'Sync Checkout Latency (ms)',
+                            data: latencyHistory.sync.length ? latencyHistory.sync : [0],
+                            borderColor: '#a855f7',
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            tension: 0.35,
+                            fill: false
+                        },
+                        {
+                            label: 'Async Processing Time (ms)',
+                            data: latencyHistory.async.length ? latencyHistory.async : [0],
+                            borderColor: '#3b82f6',
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            tension: 0.35,
+                            fill: false
+                        }
+                    ]
                 },
-                scales: {
-                    x: { ticks: { color: '#475569', font: { size: 9 } }, grid: { color: 'rgba(0,0,0,0.04)' } },
-                    y: { ticks: { color: '#475569', font: { size: 9 } }, grid: { color: 'rgba(0,0,0,0.04)' } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { color: '#475569', font: { size: 10 } }
+                        }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#475569', font: { size: 9 } }, grid: { color: 'rgba(0,0,0,0.04)' } },
+                        y: { ticks: { color: '#475569', font: { size: 9 } }, grid: { color: 'rgba(0,0,0,0.04)' } }
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     async function fetchTelemetry() {
@@ -1487,12 +1667,12 @@
             buildLatencyChart();
 
             const compList = document.getElementById('components-list');
-            compList.innerHTML = '';
+            let html = '';
             (health.channels || []).forEach(c => {
                 let badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
                 if (!c.healthy) badgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
 
-                compList.innerHTML += `
+                html += `
                     <div class="flex justify-between items-center p-3 rounded-xl border border-slate-200 bg-white shadow-sm">
                         <div>
                             <div class="text-xs font-bold text-slate-800">${c.name}</div>
@@ -1502,6 +1682,7 @@
                     </div>
                 `;
             });
+            compList.innerHTML = html;
         } catch (e) {
             console.error('Failed to fetch telemetry metrics', e);
         }
@@ -1511,36 +1692,93 @@
         try {
             const auditRes = await fetch('<%= request.getContextPath() %>/audit?format=json');
             const auditData = await auditRes.json();
+            auditsList = auditData.auditLogs || [];
 
-            const tbody = document.getElementById('audit-table-body');
-            tbody.innerHTML = '';
-
-            const logs = auditData.auditLogs || [];
-
-            if (logs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-slate-500">No security audit event logs found.</td></tr>`;
-                return;
-            }
-
-            logs.forEach(l => {
-                let actionClass = 'text-slate-700';
-                if (l.action === 'PAYMENT_SUCCESS') actionClass = 'text-emerald-700 font-bold';
-                else if (l.action.includes('FAILED')) actionClass = 'text-rose-700 font-bold';
-                else if (l.action.includes('RESTOCK')) actionClass = 'text-amber-700 font-bold';
-
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition-all text-xs">
-                        <td class="px-6 py-3 font-bold text-indigo-650 font-mono">#${l.id}</td>
-                        <td class="px-6 py-3 ${actionClass}">${l.action}</td>
-                        <td class="px-6 py-3 text-slate-700 font-medium">${l.targetType} (${l.targetId})</td>
-                        <td class="px-6 py-3 text-slate-500">${l.changedBy}</td>
-                        <td class="px-6 py-3 text-right font-mono text-slate-500">${l.timestamp ? l.timestamp.substring(11, 19) : ''}</td>
-                    </tr>
-                `;
-            });
+            renderAuditTable();
         } catch (e) {
             console.error('Failed to fetch audit log entries', e);
         }
+    }
+
+    function renderAuditTable() {
+        const tbody = document.getElementById('audit-table-body');
+        
+        if (auditsList.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-slate-500">No security audit event logs found.</td></tr>`;
+            const pag = document.getElementById('audit-pagination');
+            if (pag) pag.classList.add('hidden');
+            return;
+        }
+        
+        const pag = document.getElementById('audit-pagination');
+        if (pag) pag.classList.remove('hidden');
+        
+        const totalItems = auditsList.length;
+        const totalPages = Math.ceil(totalItems / auditPageSize);
+        if (auditCurrentPage > totalPages) auditCurrentPage = Math.max(1, totalPages);
+        
+        const startIndex = (auditCurrentPage - 1) * auditPageSize;
+        const endIndex = Math.min(startIndex + auditPageSize, totalItems);
+        
+        const pageItems = auditsList.slice(startIndex, endIndex);
+        
+        let html = '';
+        pageItems.forEach(l => {
+            let actionClass = 'text-slate-700';
+            if (l.action === 'PAYMENT_SUCCESS') actionClass = 'text-emerald-700 font-bold';
+            else if (l.action.includes('FAILED')) actionClass = 'text-rose-700 font-bold';
+            else if (l.action.includes('RESTOCK')) actionClass = 'text-amber-700 font-bold';
+
+            html += `
+                <tr class="hover:bg-slate-50 transition-all text-xs">
+                    <td class="px-6 py-3 font-bold text-indigo-650 font-mono">#${l.id}</td>
+                    <td class="px-6 py-3 ${actionClass}">${l.action}</td>
+                    <td class="px-6 py-3 text-slate-700 font-medium">${l.targetType} (${l.targetId})</td>
+                    <td class="px-6 py-3 text-slate-500">${l.changedBy}</td>
+                    <td class="px-6 py-3 text-right font-mono text-slate-500">${l.timestamp ? l.timestamp.substring(11, 19) : ''}</td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+        
+        // Update pagination UI
+        const infoEl = document.getElementById('audit-pagination-info');
+        if (infoEl) infoEl.textContent = `Showing ${totalItems === 0 ? 0 : startIndex + 1}-${endIndex} of ${totalItems} logs`;
+        
+        const btnPrev = document.getElementById('btn-audit-prev');
+        if (btnPrev) btnPrev.disabled = (auditCurrentPage === 1);
+        
+        const btnNext = document.getElementById('btn-audit-next');
+        if (btnNext) btnNext.disabled = (auditCurrentPage === totalPages || totalPages === 0);
+        
+        const pagesContainer = document.getElementById('audit-pagination-pages');
+        if (pagesContainer) {
+            pagesContainer.innerHTML = '';
+            let startPage = Math.max(1, auditCurrentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const activeClass = i === auditCurrentPage 
+                    ? 'bg-violet-600 text-white border-violet-600' 
+                    : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200';
+                pagesContainer.innerHTML += `
+                    <button onclick="goAuditPage(${i})" class="w-7 h-7 flex items-center justify-center rounded-lg border text-[10px] font-bold transition-all ${activeClass}">${i}</button>
+                `;
+            }
+        }
+    }
+
+    function goAuditPage(page) {
+        auditCurrentPage = page;
+        renderAuditTable();
+    }
+    
+    function changeAuditPage(dir) {
+        auditCurrentPage += dir;
+        renderAuditTable();
     }
 
     // ==========================================
