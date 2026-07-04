@@ -75,7 +75,7 @@
     </div>
 
     <!-- Toast message -->
-    <div id="auth-toast" class="hidden px-4 py-2.5 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 font-semibold text-xs text-center animate-pulse"></div>
+    <div id="auth-toast" class="fixed top-5 left-1/2 -translate-x-1/2 px-5 py-3.5 rounded-xl shadow-lg font-outfit text-xs z-50 hidden transition-all"></div>
 
     <!-- Forms -->
     <div id="login-form-container" class="space-y-4">
@@ -144,10 +144,57 @@
         }
     }
 
-    function handleLogin(e) {
+    async function handleLogin(e) {
         e.preventDefault();
-        // Mock authorization succeeds instantly
-        window.location.href = '<%= request.getContextPath() %>/dashboard.jsp';
+        const email = document.getElementById('login-email').value;
+        const pass = document.getElementById('login-password').value;
+        const toast = document.getElementById('auth-toast');
+
+        try {
+            const formData = new URLSearchParams();
+            formData.append('action', 'login');
+            formData.append('email', email);
+            formData.append('password', pass);
+
+            const res = await fetch('<%= request.getContextPath() %>/auth', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: formData
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                toast.textContent = "Login successful! Redirecting...";
+                toast.className = "fixed top-5 left-1/2 -translate-x-1/2 bg-emerald-600 text-white px-5 py-3.5 rounded-xl shadow-lg font-outfit text-xs z-50 transition-all";
+                toast.classList.remove('hidden');
+                setTimeout(() => {
+                    window.location.href = '<%= request.getContextPath() %>/dashboard.jsp';
+                }, 1500);
+            } else {
+                let errorMsg = "Invalid email or password";
+                try {
+                    const data = await res.json();
+                    errorMsg = data.message || errorMsg;
+                } catch(parseErr) {}
+                
+                toast.textContent = errorMsg;
+                toast.className = "fixed top-5 left-1/2 -translate-x-1/2 bg-rose-600 text-white px-5 py-3.5 rounded-xl shadow-lg font-outfit text-xs z-50 transition-all";
+                toast.classList.remove('hidden');
+                setTimeout(() => {
+                    toast.classList.add('hidden');
+                }, 3000);
+            }
+        } catch (err) {
+            console.error(err);
+            toast.textContent = "Connection error. Please try again.";
+            toast.className = "fixed top-5 left-1/2 -translate-x-1/2 bg-rose-600 text-white px-5 py-3.5 rounded-xl shadow-lg font-outfit text-xs z-50 transition-all";
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
     }
 
     async function handleRegister(e) {
@@ -155,23 +202,37 @@
         const name = document.getElementById('reg-name').value;
         const email = document.getElementById('reg-email').value;
         const pass = document.getElementById('reg-password').value;
+        const toast = document.getElementById('auth-toast');
 
         try {
             const url = `<%= request.getContextPath() %>/users?action=create&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(pass)}`;
             const res = await fetch(url);
             const text = await res.text();
             
-            const toast = document.getElementById('auth-toast');
-            toast.textContent = text;
-            toast.classList.remove('hidden');
-
-            setTimeout(() => {
-                toast.classList.add('hidden');
-                switchTab('login');
-            }, 3000);
-
+            if (res.ok) {
+                toast.textContent = text || "Registration successful!";
+                toast.className = "fixed top-5 left-1/2 -translate-x-1/2 bg-emerald-600 text-white px-5 py-3.5 rounded-xl shadow-lg font-outfit text-xs z-50 transition-all";
+                toast.classList.remove('hidden');
+                setTimeout(() => {
+                    toast.classList.add('hidden');
+                    switchTab('login');
+                }, 3000);
+            } else {
+                toast.textContent = text || "Registration failed!";
+                toast.className = "fixed top-5 left-1/2 -translate-x-1/2 bg-rose-600 text-white px-5 py-3.5 rounded-xl shadow-lg font-outfit text-xs z-50 transition-all";
+                toast.classList.remove('hidden');
+                setTimeout(() => {
+                    toast.classList.add('hidden');
+                }, 3000);
+            }
         } catch (err) {
             console.error(err);
+            toast.textContent = "Connection error. Please try again.";
+            toast.className = "fixed top-5 left-1/2 -translate-x-1/2 bg-rose-600 text-white px-5 py-3.5 rounded-xl shadow-lg font-outfit text-xs z-50 transition-all";
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
         }
     }
 </script>

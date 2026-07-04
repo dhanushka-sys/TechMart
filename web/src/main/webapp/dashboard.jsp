@@ -1,4 +1,10 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" isELIgnored="true" %>
+<%
+    if (session.getAttribute("user") == null) {
+        response.sendRedirect("login.jsp");
+        return;
+    }
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -124,6 +130,23 @@
             border: 1px solid rgba(139, 92, 246, 0.25);
             box-shadow: 0 10px 40px rgba(148, 163, 184, 0.22);
         }
+
+        .glow-btn {
+            background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%) !important;
+            box-shadow: 0 4px 14px 0 rgba(124, 58, 237, 0.4);
+            transition: all 0.25s ease;
+        }
+        .glow-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #6d28d9 0%, #4338ca 100%) !important;
+            box-shadow: 0 6px 20px 0 rgba(124, 58, 237, 0.5);
+            transform: translateY(-1px);
+        }
+        .glow-btn:disabled {
+            background: #cbd5e1 !important; /* slate-300 */
+            box-shadow: none;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
     </style>
 </head>
 <body class="min-h-screen text-slate-800 font-sans flex relative">
@@ -162,6 +185,10 @@
                 <a href="#metrics" id="nav-metrics" class="sidebar-link">
                     <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                     System Metrics
+                </a>
+                <a href="<%= request.getContextPath() %>/auth?action=logout" class="sidebar-link text-rose-600 hover:bg-rose-50 hover:text-rose-700 !mt-8">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" /></svg>
+                    Sign Out
                 </a>
             </div>
         </div>

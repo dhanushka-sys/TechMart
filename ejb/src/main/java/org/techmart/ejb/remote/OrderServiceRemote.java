@@ -6,7 +6,7 @@ import org.techmart.entity.CartItem;
 import org.techmart.exception.InventoryException;
 import java.util.List;
 
-@Remote
+// @Remote
 public interface OrderServiceRemote {
     Order placeOrder(Long userId, List<CartItem> cartItems) throws InventoryException;
     Order placeOrderSync(Long userId, List<CartItem> cartItems) throws InventoryException;

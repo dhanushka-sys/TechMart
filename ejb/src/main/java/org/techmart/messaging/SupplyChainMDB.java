@@ -23,6 +23,9 @@ public class SupplyChainMDB implements MessageListener {
         try {
             if (message instanceof MapMessage) {
                 MapMessage mapMsg = (MapMessage) message;
+                if (!mapMsg.itemExists("orderId")) {
+                    return;
+                }
                 Long orderId = mapMsg.getLong("orderId");
                 String status = mapMsg.getString("status");
 
